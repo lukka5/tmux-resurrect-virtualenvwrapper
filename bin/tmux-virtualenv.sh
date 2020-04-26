@@ -45,6 +45,7 @@ restore_panes_virtualenv() {
   while read -r _ session_name window_number pane_index venv; do
     tmux send-keys -t "${session_name}:${window_number}.${pane_index}" -l "$(printf " %q" workon "$venv")"
     tmux send-keys -t "${session_name}:${window_number}.${pane_index}" "C-m"
+    tmux send-keys -t "${session_name}:${window_number}.${pane_index}" "C-l"
   done
 }
 
