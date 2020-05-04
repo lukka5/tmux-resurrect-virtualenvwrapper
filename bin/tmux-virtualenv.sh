@@ -49,6 +49,18 @@ restore_panes_virtualenv() {
   done
 }
 
+activate_after_split() {
+  local previous_pane_id previous_virtualenv last_line
+  previous_pane_id=$(tmux display-message -p -t ! "#{pane_id}")
+  previous_virtualenv=$(tmux show-window-options -v "@virtualenv$previous_pane_id")
+  last_line=$(tmux capture-pane -p -t $previous_pane_id | grep -v "^$" | tail -n 1)
+  if [[ -n $previous_virtualenv ]]; then
+    if [[ "$last_line" != *"\`__fzf_history__\`" ]]; then
+      tmux send "workon " "$previous_virtualenv" "C-M" "C-L"
+    fi
+  fi
+}
+
 install() {
   [[ -n "${VIRTUALENVWRAPPER_SCRIPT}" ]] || {
     echo >&2 "virtualenvwrapper not found!"
@@ -69,6 +81,8 @@ install() {
 
   tmux set-option -gq "@resurrect-hook-post-save-layout" "$CURRENT_DIR/tmux-virtualenv.sh save"
   tmux set-option -gq "@resurrect-hook-pre-restore-history" "$CURRENT_DIR/tmux-virtualenv.sh restore"
+
+  tmux set-hook -g after-split-window "run-shell '$CURRENT_DIR/tmux-virtualenv.sh activate-hook'"
 }
 
 _add_line_to_file() {
@@ -96,6 +110,9 @@ main() {
   case "$1" in
     install)
       install
+      ;;
+    activate-hook)
+      activate_after_split
       ;;
     activate-venv)
       # Are we currently inside a tmux session
