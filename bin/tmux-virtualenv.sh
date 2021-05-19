@@ -50,12 +50,13 @@ restore_panes_virtualenv() {
 }
 
 activate_after_split() {
-  local previous_pane_id previous_virtualenv last_line
+  local previous_pane_id previous_virtualenv
   previous_pane_id=$(tmux display-message -p -t ! "#{pane_id}")
   previous_virtualenv=$(tmux show-window-options -v "@virtualenv$previous_pane_id")
-  last_line=$(tmux capture-pane -p -t $previous_pane_id | grep -v "^$" | tail -n 1)
   if [[ -n $previous_virtualenv ]]; then
-    if [[ "$last_line" != *"\`__fzf_history__\`" ]]; then
+    if [[ -z "$(tmux display-message -p "#{pane_start_command}")" ]]; then
+      # New split pane start command is empty. It's a normal pane and it
+      # hasn't been started by any external program (i.e. fzf).
       tmux send "workon " "$previous_virtualenv" "C-M" "C-L"
     fi
   fi
